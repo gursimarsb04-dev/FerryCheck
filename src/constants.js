@@ -48,8 +48,9 @@ export const SUBWAY_FARE = 2.90;                        // NYC MTA single ride [
 export const PORT_AUTHORITY_ADDRESS = 'Port Authority Bus Terminal, 625 8th Ave, New York, NY 10036';
 // NJ Transit Bus 116: Carteret → Port Authority (direct service)
 
-// ─── TRAIN STATION ──────────────────────────────────────────────
+// ─── TRAIN STATIONS ─────────────────────────────────────────────
 export const RAHWAY_STATION_ADDRESS = 'Rahway Station, Rahway, NJ 07065'; // nearest NJ Transit rail station
+export const PENN_STATION_ADDRESS = 'Penn Station, New York, NY 10001';   // NJ Transit train terminus
 
 // ─── LAST MILE / TERMINAL ────────────────────────────────────────
 export const TERMINAL_DRIVE_KM = 5;                    // assumed average [EA]

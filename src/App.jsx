@@ -107,11 +107,11 @@ function App() {
                 trainRoute
             ] = await Promise.all([
                 getSafeDrivingRoute(origin, destination),
-                getSafeBusRoute(origin, destination),
+                getSafeBusRoute(origin),
                 getSafeWalkingRoute(origin, destination),
                 getFerryDriveToTerminal(origin),
                 getFerryLastMile(destination),
-                getSafeTrainRoute(origin, destination)
+                getSafeTrainRoute(origin)
             ]);
 
             // 2. Crunch the numbers through the Route Calculator
@@ -146,7 +146,7 @@ function App() {
                 },
                 {
                     id: 'train',
-                    title: 'Drive to Train + Subway',
+                    title: 'Drive + NJ Transit Train',
                     carbonGrams: calculateTrainCarbon(
                         trainRoute.driveToStation.distance_km,
                         trainRoute.trainToDestination.distance_km

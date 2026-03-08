@@ -1,4 +1,4 @@
-import { TERMINAL_ADDRESS, FERRY_ROUTE_KM, CAR_ROUTE_KM, RAHWAY_STATION_ADDRESS, PORT_AUTHORITY_ADDRESS } from '../constants';
+import { TERMINAL_ADDRESS, FERRY_ROUTE_KM, CAR_ROUTE_KM, RAHWAY_STATION_ADDRESS, PORT_AUTHORITY_ADDRESS, PENN_STATION_ADDRESS } from '../constants';
 
 // ─── Core Directions Wrappers ─────────────────────────────────────
 // Each function wraps the Google Maps DirectionsService and includes
@@ -124,13 +124,14 @@ export const getSafeWalkingRoute = async (origin, destination) => {
     });
 };
 
-// ─── Bus 116 Route: BUS-only from Carteret to destination ─────────
-// NJ Transit Bus 116 runs direct from Carteret to Port Authority.
-// We filter Google Transit to BUS mode ONLY — no subway, no train.
-export const getSafeBusRoute = async (origin, destination) => {
+// ─── Bus 116 Route: Carteret → Port Authority (fixed terminus) ────
+// NJ Transit Bus 116 goes direct from Carteret to Port Authority.
+// We route to PORT_AUTHORITY specifically so Google doesn't detour
+// through Perth Amboy or connect to trains.
+export const getSafeBusRoute = async (origin) => {
     return getFilteredTransitRoute(
         origin,
-        destination,
+        PORT_AUTHORITY_ADDRESS,
         [window.google.maps.TransitMode.BUS]
     ).catch((err) => {
         console.warn("Bus 116 route fallback used:", err.message);
@@ -138,16 +139,17 @@ export const getSafeBusRoute = async (origin, destination) => {
     });
 };
 
-// ─── Train Route: Two-Leg (Drive to Rahway + NJ Transit Train) ───
-// Drive to Rahway station, then NJ Transit TRAIN only to destination.
-// We filter leg 2 to TRAIN mode ONLY — no subway, no bus.
-export const getSafeTrainRoute = async (origin, destination) => {
+// ─── Train Route: Two-Leg (Drive to Rahway + Train to Penn Station) ──
+// Drive to Rahway station, then NJ Transit TRAIN to Penn Station.
+// We route to PENN_STATION specifically so Google doesn't detour
+// through Perth Amboy or connect to buses.
+export const getSafeTrainRoute = async (origin) => {
     try {
         const [driveLeg, transitLeg] = await Promise.all([
             getDrivingRoute(origin, RAHWAY_STATION_ADDRESS),
             getFilteredTransitRoute(
                 RAHWAY_STATION_ADDRESS,
-                destination,
+                PENN_STATION_ADDRESS,
                 [window.google.maps.TransitMode.TRAIN]
             )
         ]);
