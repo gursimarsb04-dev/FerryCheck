@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import InputPanel from './components/InputPanel';
-import SortToggle from './components/SortToggle';
-import RouteGrid from './components/RouteGrid';
-import RecommendationPanel from './components/RecommendationPanel';
+import React, { useState, useEffect } from 'react';
+import DashboardSidebar from './components/DashboardSidebar';
+import MapCanvas from './components/MapCanvas';
+import DataAuditModal from './components/DataAuditModal';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { TERMINAL_ADDRESS } from './constants';
 
@@ -19,6 +18,7 @@ import {
     calculateWalkCarbon, calculateWalkTime, calculateWalkCost
 } from './utils/routeCalculator';
 import { generateRecommendation } from './utils/claudeClient';
+import { FERRY_BASE_EMISSIONS_G } from './constants';
 
 function App() {
     const { isLoaded, loadError } = useJsApiLoader({
@@ -26,21 +26,49 @@ function App() {
         libraries,
     });
 
-    // Origin is always Carteret Waterfront — hardcoded per project spec
-    const origin = TERMINAL_ADDRESS;
+    const [origin, setOrigin] = useState(TERMINAL_ADDRESS);
     const [destination, setDestination] = useState('');
     const [activeSort, setActiveSort] = useState('best');
     const [isLoading, setIsLoading] = useState(false);
-    const [hasSearched, setHasSearched] = useState(false);
 
     // Dynamic State
     const [routesData, setRoutesData] = useState([]);
     const [aiRecommendation, setAiRecommendation] = useState("");
 
+    // Dashboard Specific State
+    const [selectedRouteId, setSelectedRouteId] = useState(null);
+    const [passengerCount, setPassengerCount] = useState(45); // 30% default
+    const [directionsResponse, setDirectionsResponse] = useState(null);
+
+    // Re-fetch directions visual when a route is selected
+    useEffect(() => {
+        if (!isLoaded || !origin || !destination || !selectedRouteId) return;
+
+        const directionsService = new window.google.maps.DirectionsService();
+
+        let travelMode = window.google.maps.TravelMode.DRIVING;
+        if (selectedRouteId === 'bus' || selectedRouteId === 'train') {
+            travelMode = window.google.maps.TravelMode.TRANSIT;
+        } else if (selectedRouteId === 'walk') {
+            travelMode = window.google.maps.TravelMode.WALKING;
+        }
+
+        directionsService.route(
+            { origin, destination, travelMode },
+            (result, status) => {
+                if (status === window.google.maps.DirectionsStatus.OK) {
+                    setDirectionsResponse(result);
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                    setDirectionsResponse(null);
+                }
+            }
+        );
+    }, [selectedRouteId, origin, destination, isLoaded]);
+
     const handleSearch = async () => {
         if (!destination) return;
         setIsLoading(true);
-        setHasSearched(true);
 
         try {
             // 1. Fetch all Google Maps route legs in parallel
@@ -110,6 +138,7 @@ function App() {
             // 4. Update UI State
             setRoutesData(processedRoutes);
             setAiRecommendation(aiData.recommendation);
+            setSelectedRouteId('ferry');
 
         } catch (error) {
             console.error("Error optimizing route:", error);
@@ -128,53 +157,34 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col w-full overflow-x-hidden font-sans bg-slate-50 text-slate-900">
-            {/* Header / Input Area */}
-            <InputPanel
-                origin={origin}
-                destination={destination}
-                setDestination={setDestination}
+        <div className="h-screen w-full flex overflow-hidden font-sans bg-slate-950 text-slate-300">
+            {/* Split Pane Left: Sidebar */}
+            <DashboardSidebar
+                origin={origin} setOrigin={setOrigin}
+                destination={destination} setDestination={setDestination}
                 onSearch={handleSearch}
+                routes={routesData}
+                activeSort={activeSort} setActiveSort={setActiveSort}
+                selectedRouteId={selectedRouteId} setSelectedRouteId={setSelectedRouteId}
+                isLoading={isLoading}
+                aiRecommendation={aiRecommendation}
             />
 
-            {/* Results Area */}
-            {hasSearched && (
-                <main className="w-full max-w-7xl mx-auto py-12 px-4 md:px-8 flex-1 flex flex-col items-center">
-                    <RecommendationPanel
-                        isLoading={isLoading}
-                        recommendationText={aiRecommendation}
+            {/* Split Pane Right: Map Canvas */}
+            <div className="flex-1 relative bg-slate-900 border-l border-slate-800">
+                <MapCanvas directionsResponse={directionsResponse} />
+
+                {/* Conditional Data Overlay when Ferry is selected */}
+                {selectedRouteId === 'ferry' && (
+                    <DataAuditModal
+                        passengerCount={passengerCount}
+                        setPassengerCount={setPassengerCount}
+                        baseFerryCarbon={FERRY_BASE_EMISSIONS_G}
+                        carBaselineCarbon={routesData.find(r => r.id === 'car')?.carbonGrams || 7200}
+                        busBaselineCarbon={routesData.find(r => r.id === 'bus')?.carbonGrams || 1100}
                     />
-
-                    {!isLoading && routesData.length > 0 && (
-                        <div className="w-full flex flex-col items-center animate-[fadeIn_0.5s_ease-out]">
-                            <SortToggle activeSort={activeSort} onSortChange={setActiveSort} />
-                            <RouteGrid routes={routesData} activeSort={activeSort} />
-                        </div>
-                    )}
-                </main>
-            )}
-
-            {/* Empty State Instructions (Before Search) */}
-            {!hasSearched && (
-                <main className="w-full max-w-3xl mx-auto py-24 px-4 md:px-8 flex-1 flex flex-col items-center justify-center text-center opacity-50">
-                    <span className="text-6xl mb-6">📍</span>
-                    <h2 className="text-2xl font-bold text-slate-400 mb-2">Ready to plan your commute?</h2>
-                    <p className="text-slate-500 font-medium">Enter a destination in NYC to compare real-time travel options from Carteret Waterfront.</p>
-                </main>
-            )}
-
-            {/* Footer */}
-            <footer className="w-full bg-slate-900 text-slate-400 py-12 px-4 md:px-8 border-t-8 border-slate-950 mt-auto">
-                <div className="max-w-4xl mx-auto text-center text-sm leading-relaxed font-medium">
-                    <p className="mb-4">
-                        Carteret Commute Optimizer analyzes real-time distances from Google Maps against established emissions factors and fares.
-                        It assumes 30% ferry occupancy and a 5km drive to the terminal based on the Environmental Assessment.
-                    </p>
-                    <p className="opacity-60 font-bold uppercase tracking-widest text-xs">
-                        &copy; {new Date().getFullYear()} Carteret Commute Tool
-                    </p>
-                </div>
-            </footer>
+                )}
+            </div>
         </div>
     );
 }
