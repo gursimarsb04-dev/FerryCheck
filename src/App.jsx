@@ -9,7 +9,7 @@ import { TERMINAL_ADDRESS } from './constants';
 const libraries = ['places'];
 
 // Import our new utility layers
-import { getDrivingRoute, getTransitRoute, getWalkingRoute, getFerryDriveToTerminal, getFerryLastMile } from './utils/mapsClient';
+import { getSafeDrivingRoute, getSafeTransitRoute, getSafeWalkingRoute, getFerryDriveToTerminal, getFerryLastMile } from './utils/mapsClient';
 import {
     calculateFerryCarbon, calculateFerryTime, calculateFerryCost,
     calculateCarCarbon, calculateCarTime, calculateCarCost,
@@ -51,9 +51,9 @@ function App() {
                 ferryDriveLeg,
                 ferryLastMileLeg
             ] = await Promise.all([
-                getDrivingRoute(origin, destination),
-                getTransitRoute(origin, destination),
-                getWalkingRoute(origin, destination),
+                getSafeDrivingRoute(origin, destination),
+                getSafeTransitRoute(origin, destination),
+                getSafeWalkingRoute(origin, destination),
                 getFerryDriveToTerminal(origin),
                 getFerryLastMile(destination)
             ]);
