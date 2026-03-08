@@ -44,6 +44,10 @@ export const WALK_CALORIES_PER_KM = 65;                // approximate
 // ─── SUBWAY ─────────────────────────────────────────────────────
 export const SUBWAY_FARE = 2.90;                        // NYC MTA single ride [2024]
 
+// ─── BUS 116 ──────────────────────────────────────────────────
+export const PORT_AUTHORITY_ADDRESS = 'Port Authority Bus Terminal, 625 8th Ave, New York, NY 10036';
+// NJ Transit Bus 116: Carteret → Port Authority (direct service)
+
 // ─── TRAIN STATION ──────────────────────────────────────────────
 export const RAHWAY_STATION_ADDRESS = 'Rahway Station, Rahway, NJ 07065'; // nearest NJ Transit rail station
 

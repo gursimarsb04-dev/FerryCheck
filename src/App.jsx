@@ -8,7 +8,7 @@ import { TERMINAL_ADDRESS } from './constants';
 const libraries = ['places'];
 
 // Import our new utility layers
-import { getSafeDrivingRoute, getSafeTransitRoute, getSafeWalkingRoute, getSafeTrainRoute, getFerryDriveToTerminal, getFerryLastMile, isWithinNYC } from './utils/mapsClient';
+import { getSafeDrivingRoute, getSafeWalkingRoute, getSafeTrainRoute, getSafeBusRoute, getFerryDriveToTerminal, getFerryLastMile, isWithinNYC } from './utils/mapsClient';
 import {
     calculateFerryCarbon, calculateFerryTime, calculateFerryCost,
     calculateCarCarbon, calculateCarTime, calculateCarCost,
@@ -83,14 +83,14 @@ function App() {
             // 1. Fetch all Google Maps route legs in parallel
             const [
                 carRoute,
-                transitRoute,
+                busRoute,
                 walkRoute,
                 ferryDriveLeg,
                 ferryLastMileLeg,
                 trainRoute
             ] = await Promise.all([
                 getSafeDrivingRoute(origin, destination),
-                getSafeTransitRoute(origin, destination),
+                getSafeBusRoute(origin, destination),
                 getSafeWalkingRoute(origin, destination),
                 getFerryDriveToTerminal(origin),
                 getFerryLastMile(destination),
@@ -122,9 +122,9 @@ function App() {
                 },
                 {
                     id: 'bus',
-                    title: 'NJ Transit Bus',
-                    carbonGrams: calculateBusCarbon(transitRoute.distance_km),
-                    timeMins: calculateBusTime(transitRoute.duration_mins),
+                    title: 'Bus 116 + Subway',
+                    carbonGrams: calculateBusCarbon(busRoute.busLeg.distance_km),
+                    timeMins: calculateBusTime(busRoute.busLeg.duration_mins, busRoute.subwayLeg.duration_mins),
                     costDollars: calculateBusCost()
                 },
                 {

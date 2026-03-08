@@ -49,10 +49,11 @@ export const calculateCarpoolCarbon = (drivingDistanceKm) => calculateCarCarbon(
 export const calculateCarpoolTime = (drivingMins) => drivingMins;
 export const calculateCarpoolCost = (drivingDistanceKm) => calculateCarCost(drivingDistanceKm) / CARPOOL_PASSENGERS;
 
-// --- BUS ---
-export const calculateBusCarbon = (transitDistanceKm) => transitDistanceKm * BUS_CO2_PER_PAX_KM;
-export const calculateBusTime = (transitMins) => transitMins;
-export const calculateBusCost = () => BUS_FARE + SUBWAY_FARE; // $6.50 bus + $2.90 NYC subway transfer
+// --- BUS (Two-Leg: Bus 116 to Port Authority + NYC Subway/Bus to destination) ---
+export const calculateBusCarbon = (busDistanceKm) => busDistanceKm * BUS_CO2_PER_PAX_KM;
+// subway is electric, ~0 CO2 — so we only count the NJ Transit bus leg
+export const calculateBusTime = (busMins, subwayMins) => busMins + subwayMins;
+export const calculateBusCost = () => BUS_FARE + SUBWAY_FARE; // $6.50 NJ Transit Bus 116 + $2.90 NYC subway transfer
 
 // --- TRAIN (Two-Leg: Drive to Rahway + NJ Transit to Penn + Subway) ---
 export const calculateTrainCarbon = (driveToStationKm, trainRideKm) => {
