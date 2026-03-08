@@ -3,7 +3,7 @@ import Act1_TheClaim from './components/Act1_TheClaim';
 import Act2_TheCheck from './components/Act2_TheCheck';
 import RouteMap from './components/RouteMap';
 import Act3_TheVerdict from './components/Act3_TheVerdict';
-import { ROUTE_DISTANCE_KM, PERCENT_DRIVE_TO_TERMINAL } from './constants';
+import { CAR_ROUTE_KM, PERCENT_DRIVE_TO_TERMINAL } from './constants';
 
 function App() {
     const [passengerCount, setPassengerCount] = useState(1);
@@ -21,7 +21,7 @@ function App() {
             <section className="w-full bg-slate-50 py-12 px-4 md:px-8">
                 <div className="max-w-5xl mx-auto">
                     <div className="mb-8 text-center">
-                        <h3 className="text-2xl font-bold text-slate-800">The {ROUTE_DISTANCE_KM}km Commute</h3>
+                        <h3 className="text-2xl font-bold text-slate-800">The {CAR_ROUTE_KM}km Commute</h3>
                         <p className="text-slate-500">Carteret Terminal to Pier 11, Manhattan</p>
                     </div>
                     <RouteMap />

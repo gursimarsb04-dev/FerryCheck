@@ -6,14 +6,14 @@ import {
     OFFICIAL_QUOTE,
     FERRY_BASE_EMISSIONS_G,
     CAR_CO2_PER_KM,
-    ROUTE_DISTANCE_KM,
+    CAR_ROUTE_KM,
     NJ_TRANSIT_BUS_CO2
 } from '../constants';
 import { calculateBreakevenPassengers } from '../utils/emissionsLogic';
 
 export default function Act3_TheVerdict({ passengerCount }) {
     const breakevenCar = calculateBreakevenPassengers();
-    const soloCarCO2 = CAR_CO2_PER_KM * ROUTE_DISTANCE_KM;
+    const soloCarCO2 = CAR_CO2_PER_KM * CAR_ROUTE_KM;
     const ferryAtFull = Math.round(FERRY_BASE_EMISSIONS_G / VESSEL_CAPACITY);
 
     return (
@@ -69,7 +69,7 @@ export default function Act3_TheVerdict({ passengerCount }) {
                 </div>
 
                 <p className="text-sm text-slate-400 mb-16 text-center max-w-2xl mx-auto">
-                    Emissions derived from the project's own Environmental Assessment (73 gal/trip × 10 kg CO₂/gal). Route distance: {ROUTE_DISTANCE_KM}km. Car factor: {CAR_CO2_PER_KM}g/km (DEFRA 2024).
+                    Emissions derived from the project's own Environmental Assessment (73 gal/trip × 10 kg CO₂/gal). Route distance: {CAR_ROUTE_KM}km. Car factor: {CAR_CO2_PER_KM}g/km (DEFRA 2024).
                 </p>
 
                 {/* Benchmarks Section */}

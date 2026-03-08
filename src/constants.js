@@ -3,15 +3,17 @@
 // VESSEL
 export const VESSEL_CAPACITY = 149;                   // confirmed [EA, press releases]
 
-// ROUTE
-export const ROUTE_DISTANCE_KM = 22;                  // 12 nautical miles, nautical routing [data.md]
-export const EA_ROUTE_DISTANCE_KM = 32.2;             // EA's generalized 20-mile baseline [EA]
+// ROUTE DISTANCES (ferry and car travel different paths)
+export const FERRY_ROUTE_KM = 33;                     // ~18 Nm navigable waterway via Arthur Kill + Kill Van Kull [Savvy Navvy]
+export const EA_FERRY_ROUTE_KM = 32.2;                // EA modeled 20-mile one-way route [EA Table 3.10-1]
+export const CAR_ROUTE_KM = 41;                       // 25.5 mi via I-278 E [Google Maps, verified]
+export const EA_CAR_ROUTE_KM = 48.3;                  // EA modeled 30-mile "No Build" driving baseline [EA Table 3.10-1]
 
 // EMISSIONS
-export const FERRY_BASE_EMISSIONS_G = 498750;          // 73 gal scaled to 22km actual route [EA/data.md]
+export const FERRY_BASE_EMISSIONS_G = 730000;          // 73 gal one-way × 10 kg CO2/gal — NOT scaled [EA Table 3.10-1]
 export const CAR_CO2_PER_KM = 180;                     // confirmed [DEFRA 2024]
 export const BUS_CO2_PER_KM = 27.2;                    // confirmed [DEFRA 2024]
-export const NJ_TRANSIT_BUS_CO2 = 598;                 // Math.round(27.2 × 22 km) = 598g per passenger [derived]
+export const NJ_TRANSIT_BUS_CO2 = 1115;                // Math.round(27.2 × 41 km car route) = 1115g per pax [derived]
 
 // LAST MILE
 export const TERMINAL_DRIVE_KM = 5;                    // assumed average [EA]
