@@ -3,6 +3,7 @@
 
 // ─── VESSEL ───────────────────────────────────────────────────────
 export const VESSEL_CAPACITY = 149;                   // confirmed [EA, press releases]
+export const FERRY_CAPACITY = VESSEL_CAPACITY;         // alias used by routeCalculator
 export const FERRY_ASSUMED_OCCUPANCY = 45;             // 30% of capacity, conservative Year 1 estimate
 
 // ─── ROUTE DISTANCES (ferry and car travel different paths) ──────
@@ -15,7 +16,9 @@ export const EA_CAR_ROUTE_KM = 48.3;                  // EA modeled 30-mile "No 
 export const FERRY_BASE_EMISSIONS_G = 730000;          // 73 gal one-way × 10 kg CO2/gal — NOT scaled [EA Table 3.10-1]
 export const CAR_CO2_PER_KM = 180;                     // US fleet average [DEFRA 2024]
 export const BUS_CO2_PER_KM = 27.2;                    // confirmed [DEFRA 2024]
+export const BUS_CO2_PER_PAX_KM = BUS_CO2_PER_KM;     // alias used by routeCalculator
 export const TRAIN_CO2_PER_KM = 41;                    // NJ Transit diesel, estimated [DEFRA 2024]
+export const TRAIN_CO2_PER_PAX_KM = TRAIN_CO2_PER_KM; // alias used by routeCalculator
 export const NJ_TRANSIT_BUS_CO2 = 1115;                // Math.round(27.2 × 41 km car route) = 1115g per pax [derived]
 
 // ─── COSTS ───────────────────────────────────────────────────────
@@ -34,6 +37,8 @@ export const FERRY_TIME_WATER_MINS = 25;               // ~18 Nm at ~25 knots [S
 export const CARPOOL_PASSENGERS = 3;                   // assumed average carpool size [Updates.MD spec]
 
 // ─── WALK ────────────────────────────────────────────────────────
+export const WALK_CO2 = 0;                             // zero emissions for walking
+export const WALK_COST = 0;                            // free to walk
 export const WALK_CALORIES_PER_KM = 65;                // approximate
 
 // ─── LAST MILE / TERMINAL ────────────────────────────────────────

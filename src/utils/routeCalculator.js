@@ -1,107 +1,66 @@
-// routeCalculator.js — combines Google Maps data with emission/cost constants
-// All distances come from mapsClient.js. Constants come from constants.js.
-// No hardcoded distances in this file.
-
 import {
     FERRY_BASE_EMISSIONS_G,
+    CAR_CO2_PER_KM,
+    CARPOOL_PASSENGERS,
+    BUS_CO2_PER_PAX_KM,
+    TRAIN_CO2_PER_PAX_KM,
+    WALK_CO2,
+    FERRY_CAPACITY,
     FERRY_ASSUMED_OCCUPANCY,
-    FERRY_ROUTE_KM,
     FERRY_TIME_WATER_MINS,
     FERRY_FARE,
     FERRY_LAST_MILE_UBER,
-    CAR_CO2_PER_KM,
     CAR_TOLLS_ROUND_TRIP,
     CAR_PARKING_PER_DAY,
     CAR_GAS_COST_PER_KM,
-    BUS_CO2_PER_KM,
     BUS_FARE,
-    TRAIN_CO2_PER_KM,
     TRAIN_FARE,
-    CARPOOL_PASSENGERS,
-    WALK_CALORIES_PER_KM,
+    WALK_COST,
+    WALK_CALORIES_PER_KM
 } from '../constants';
 
-// ─── FERRY ───────────────────────────────────────────────────────
-
-export const calculateFerryCarbon = (terminalDriveKm, lastMileKm = 0) => {
-    const ferryPerPax = FERRY_BASE_EMISSIONS_G / FERRY_ASSUMED_OCCUPANCY;
-    const drivingEmissions = CAR_CO2_PER_KM * (terminalDriveKm + lastMileKm);
-    return Math.round(ferryPerPax + drivingEmissions);
+// --- FERRY ---
+export const calculateFerryCarbon = (terminalDriveKm, lastMileKm) => {
+    const fixedFerryCO2 = FERRY_BASE_EMISSIONS_G / FERRY_ASSUMED_OCCUPANCY; // 730000 / 45 = 16,222g
+    const terminalDriveCO2 = terminalDriveKm * CAR_CO2_PER_KM;
+    const lastMileCO2 = lastMileKm * CAR_CO2_PER_KM; // assuming Uber/car last mile
+    return fixedFerryCO2 + terminalDriveCO2 + lastMileCO2;
 };
 
 export const calculateFerryTime = (terminalDriveMins, lastMileMins) => {
-    return Math.round(terminalDriveMins + FERRY_TIME_WATER_MINS + lastMileMins);
+    return terminalDriveMins + FERRY_TIME_WATER_MINS + lastMileMins;
 };
 
-export const calculateFerryCost = (lastMileKm = 0) => {
-    const terminalGas = CAR_GAS_COST_PER_KM * 5; // avg terminal drive
-    const lastMileCost = lastMileKm > 1.5 ? FERRY_LAST_MILE_UBER : 0;
-    return +(FERRY_FARE + terminalGas + lastMileCost).toFixed(2);
+export const calculateFerryCost = (lastMileKm) => {
+    // Assuming Last Mile is an Uber if > 1km walk, else 0
+    let lastMileCost = lastMileKm > 1 ? FERRY_LAST_MILE_UBER : 0;
+    return FERRY_FARE + lastMileCost;
 };
 
-// ─── CAR ─────────────────────────────────────────────────────────
-
-export const calculateCarCarbon = (drivingDistanceKm) => {
-    return Math.round(CAR_CO2_PER_KM * drivingDistanceKm);
-};
-
-export const calculateCarTime = (drivingMins) => {
-    return Math.round(drivingMins);
-};
-
+// --- CAR ---
+export const calculateCarCarbon = (drivingDistanceKm) => drivingDistanceKm * CAR_CO2_PER_KM;
+export const calculateCarTime = (drivingMins) => drivingMins;
 export const calculateCarCost = (drivingDistanceKm) => {
-    const gas = CAR_GAS_COST_PER_KM * drivingDistanceKm;
-    return +(gas + CAR_TOLLS_ROUND_TRIP + CAR_PARKING_PER_DAY).toFixed(2);
+    return (drivingDistanceKm * CAR_GAS_COST_PER_KM) + (CAR_TOLLS_ROUND_TRIP / 2) + CAR_PARKING_PER_DAY;
 };
 
-// ─── CARPOOL ─────────────────────────────────────────────────────
+// --- CARPOOL ---
+export const calculateCarpoolCarbon = (drivingDistanceKm) => calculateCarCarbon(drivingDistanceKm) / CARPOOL_PASSENGERS;
+export const calculateCarpoolTime = (drivingMins) => drivingMins;
+export const calculateCarpoolCost = (drivingDistanceKm) => calculateCarCost(drivingDistanceKm) / CARPOOL_PASSENGERS;
 
-export const calculateCarpoolCarbon = (drivingDistanceKm) => {
-    return Math.round(calculateCarCarbon(drivingDistanceKm) / CARPOOL_PASSENGERS);
-};
+// --- BUS ---
+export const calculateBusCarbon = (transitDistanceKm) => transitDistanceKm * BUS_CO2_PER_PAX_KM;
+export const calculateBusTime = (transitMins) => transitMins;
+export const calculateBusCost = () => BUS_FARE;
 
-export const calculateCarpoolCost = (drivingDistanceKm) => {
-    return +(calculateCarCost(drivingDistanceKm) / CARPOOL_PASSENGERS).toFixed(2);
-};
+// --- TRAIN ---
+export const calculateTrainCarbon = (transitDistanceKm) => transitDistanceKm * TRAIN_CO2_PER_PAX_KM;
+export const calculateTrainTime = (transitMins) => transitMins;
+export const calculateTrainCost = () => TRAIN_FARE;
 
-// ─── BUS ─────────────────────────────────────────────────────────
-
-export const calculateBusCarbon = (transitDistanceKm) => {
-    return Math.round(BUS_CO2_PER_KM * transitDistanceKm);
-};
-
-export const calculateBusTime = (transitMins) => {
-    return Math.round(transitMins);
-};
-
-export const calculateBusCost = () => {
-    return BUS_FARE;
-};
-
-// ─── TRAIN ───────────────────────────────────────────────────────
-
-export const calculateTrainCarbon = (transitDistanceKm) => {
-    return Math.round(TRAIN_CO2_PER_KM * transitDistanceKm);
-};
-
-export const calculateTrainTime = (transitMins) => {
-    return Math.round(transitMins);
-};
-
-export const calculateTrainCost = () => {
-    return TRAIN_FARE;
-};
-
-// ─── WALK ────────────────────────────────────────────────────────
-
-export const calculateWalkCarbon = () => 0;
-
-export const calculateWalkTime = (walkingMins) => {
-    return Math.round(walkingMins);
-};
-
-export const calculateWalkCost = () => 0;
-
-export const calculateWalkCalories = (walkingKm) => {
-    return Math.round(WALK_CALORIES_PER_KM * walkingKm);
-};
+// --- WALK ---
+export const calculateWalkCarbon = () => WALK_CO2;
+export const calculateWalkTime = (walkingMins) => walkingMins;
+export const calculateWalkCost = () => WALK_COST;
+export const calculateWalkCalories = (walkingKm) => walkingKm * WALK_CALORIES_PER_KM;
