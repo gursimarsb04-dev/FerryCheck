@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { TERMINAL_ADDRESS } from '../constants';
 
 // Note: In a real app, these calls would either pass through a backend 
 // or use the Google Maps JS SDK directly initialized in the App. 
@@ -72,7 +73,6 @@ export const getWalkingRoute = async (origin, destination) => {
 
 // Ferry specific legs
 export const getFerryDriveToTerminal = async (origin) => {
-    const TERMINAL_ADDRESS = "Carteret Waterfront Park, Carteret, NJ 07008";
     return getDrivingRoute(origin, TERMINAL_ADDRESS).catch(() => {
         return { distance_km: 5.2, duration_mins: 12 }; // Reliable Fallback
     });

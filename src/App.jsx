@@ -4,6 +4,7 @@ import SortToggle from './components/SortToggle';
 import RouteGrid from './components/RouteGrid';
 import RecommendationPanel from './components/RecommendationPanel';
 import { useJsApiLoader } from '@react-google-maps/api';
+import { TERMINAL_ADDRESS } from './constants';
 
 const libraries = ['places'];
 
@@ -25,7 +26,8 @@ function App() {
         libraries,
     });
 
-    const [origin, setOrigin] = useState('');
+    // Origin is always Carteret Waterfront — hardcoded per project spec
+    const origin = TERMINAL_ADDRESS;
     const [destination, setDestination] = useState('');
     const [activeSort, setActiveSort] = useState('best');
     const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +38,7 @@ function App() {
     const [aiRecommendation, setAiRecommendation] = useState("");
 
     const handleSearch = async () => {
-        if (!origin || !destination) return;
+        if (!destination) return;
         setIsLoading(true);
         setHasSearched(true);
 
@@ -130,7 +132,6 @@ function App() {
             {/* Header / Input Area */}
             <InputPanel
                 origin={origin}
-                setOrigin={setOrigin}
                 destination={destination}
                 setDestination={setDestination}
                 onSearch={handleSearch}
@@ -158,7 +159,7 @@ function App() {
                 <main className="w-full max-w-3xl mx-auto py-24 px-4 md:px-8 flex-1 flex flex-col items-center justify-center text-center opacity-50">
                     <span className="text-6xl mb-6">📍</span>
                     <h2 className="text-2xl font-bold text-slate-400 mb-2">Ready to plan your commute?</h2>
-                    <p className="text-slate-500 font-medium">Enter an origin in Carteret and a destination in NYC to compare real-time travel options.</p>
+                    <p className="text-slate-500 font-medium">Enter a destination in NYC to compare real-time travel options from Carteret Waterfront.</p>
                 </main>
             )}
 
