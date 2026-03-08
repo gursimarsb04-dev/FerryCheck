@@ -46,6 +46,23 @@ function App() {
 
         const directionsService = new window.google.maps.DirectionsService();
 
+        // Ferry: show ONLY last-mile from Pier 11 → destination (water route drawn by MapCanvas polyline)
+        if (selectedRouteId === 'ferry') {
+            const PIER_11 = "Pier 11 / Wall St, New York, NY 10005";
+            directionsService.route(
+                { origin: PIER_11, destination, travelMode: window.google.maps.TravelMode.DRIVING },
+                (result, status) => {
+                    if (status === window.google.maps.DirectionsStatus.OK) {
+                        setDirectionsResponse(result);
+                    } else {
+                        setDirectionsResponse(null);
+                    }
+                }
+            );
+            return;
+        }
+
+        // Other routes: standard directions from origin to destination
         let travelMode = window.google.maps.TravelMode.DRIVING;
         if (selectedRouteId === 'bus' || selectedRouteId === 'train') {
             travelMode = window.google.maps.TravelMode.TRANSIT;
@@ -189,7 +206,7 @@ function App() {
 
             {/* Split Pane Right: Map Canvas */}
             <div className="flex-1 relative bg-slate-900 border-l border-slate-800">
-                <MapCanvas directionsResponse={directionsResponse} />
+                <MapCanvas directionsResponse={directionsResponse} selectedRouteId={selectedRouteId} />
 
                 {/* Conditional Data Overlay when Ferry is selected */}
                 {selectedRouteId === 'ferry' && (

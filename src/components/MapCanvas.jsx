@@ -59,13 +59,20 @@ const darkMapStyle = [
 ];
 
 export default function MapCanvas({ directionsResponse, selectedRouteId }) {
-    // Hardcoded path over the water from Carteret to Pier 11
+    // Ferry waterway route: Carteret → Arthur Kill → Kill Van Kull → Upper Bay → Pier 11
     const ferryPath = [
         { lat: 40.5843, lng: -74.2185 }, // Carteret Waterfront Park
-        { lat: 40.5950, lng: -74.1900 }, // Arthur Kill
-        { lat: 40.6400, lng: -74.1000 }, // Kill Van Kull
-        { lat: 40.6800, lng: -74.0300 }, // Upper Bay
-        { lat: 40.7032, lng: -74.0044 }  // Pier 11
+        { lat: 40.5900, lng: -74.2100 }, // Arthur Kill (start)
+        { lat: 40.6050, lng: -74.1950 }, // Arthur Kill (mid)
+        { lat: 40.6250, lng: -74.1780 }, // Arthur Kill → Kill Van Kull
+        { lat: 40.6430, lng: -74.1550 }, // Kill Van Kull (west entrance)
+        { lat: 40.6460, lng: -74.1200 }, // Kill Van Kull (Bayonne Bridge)
+        { lat: 40.6470, lng: -74.0900 }, // Kill Van Kull (mid)
+        { lat: 40.6500, lng: -74.0650 }, // Kill Van Kull (east exit)
+        { lat: 40.6600, lng: -74.0500 }, // Upper Bay (entrance)
+        { lat: 40.6800, lng: -74.0350 }, // Upper Bay (near Liberty Island)
+        { lat: 40.6950, lng: -74.0150 }, // Upper Bay (south of Manhattan)
+        { lat: 40.7032, lng: -74.0044 }  // Pier 11 / Wall St
     ];
 
     return (
