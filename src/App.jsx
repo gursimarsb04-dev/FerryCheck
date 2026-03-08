@@ -3,35 +3,127 @@ import InputPanel from './components/InputPanel';
 import SortToggle from './components/SortToggle';
 import RouteGrid from './components/RouteGrid';
 import RecommendationPanel from './components/RecommendationPanel';
+import { useJsApiLoader } from '@react-google-maps/api';
 
-// Mock data — uses verified constants (730,000g ferry, 41km car route, 33km waterway)
-// Ferry assumes 30% occupancy (45 pax): 730000/45 + 180*5 last mile = 17,122g
-// These will be replaced by Google Maps API data at runtime
-const MOCK_ROUTES = [
-    { id: 'ferry', title: 'Ferry + Last Mile', carbonGrams: 17122, costDollars: 40.60, timeMins: 50 },
-    { id: 'car', title: 'Car (Drive Tunnel)', carbonGrams: 7380, costDollars: 62.92, timeMins: 55 },
-    { id: 'bus', title: 'NJ Transit Bus', carbonGrams: 1115, costDollars: 6.50, timeMins: 65 },
-    { id: 'train', title: 'Drive to Train + Subway', carbonGrams: 1681, costDollars: 9.00, timeMins: 80 },
-    { id: 'carpool', title: 'Carpool (3 Pax)', carbonGrams: 2460, costDollars: 20.97, timeMins: 55 },
-    { id: 'walk', title: 'Walk to New York', carbonGrams: 0, costDollars: 0.00, timeMins: 340 }
-];
+const libraries = ['places'];
+
+// Import our new utility layers
+import { getDrivingRoute, getTransitRoute, getWalkingRoute, getFerryDriveToTerminal, getFerryLastMile } from './utils/mapsClient';
+import {
+    calculateFerryCarbon, calculateFerryTime, calculateFerryCost,
+    calculateCarCarbon, calculateCarTime, calculateCarCost,
+    calculateCarpoolCarbon, calculateCarpoolTime, calculateCarpoolCost,
+    calculateBusCarbon, calculateBusTime, calculateBusCost,
+    calculateTrainCarbon, calculateTrainTime, calculateTrainCost,
+    calculateWalkCarbon, calculateWalkTime, calculateWalkCost
+} from './utils/routeCalculator';
+import { generateRecommendation } from './utils/claudeClient';
 
 function App() {
+    const { isLoaded, loadError } = useJsApiLoader({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+        libraries,
+    });
+
     const [origin, setOrigin] = useState('');
     const [destination, setDestination] = useState('');
     const [activeSort, setActiveSort] = useState('best');
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
 
-    const handleSearch = () => {
+    // Dynamic State
+    const [routesData, setRoutesData] = useState([]);
+    const [aiRecommendation, setAiRecommendation] = useState("");
+
+    const handleSearch = async () => {
         if (!origin || !destination) return;
         setIsLoading(true);
         setHasSearched(true);
-        // Simulate API delay for UI effect
-        setTimeout(() => {
+
+        try {
+            // 1. Fetch all Google Maps route legs in parallel
+            const [
+                carRoute,
+                transitRoute,
+                walkRoute,
+                ferryDriveLeg,
+                ferryLastMileLeg
+            ] = await Promise.all([
+                getDrivingRoute(origin, destination),
+                getTransitRoute(origin, destination),
+                getWalkingRoute(origin, destination),
+                getFerryDriveToTerminal(origin),
+                getFerryLastMile(destination)
+            ]);
+
+            // 2. Crunch the numbers through the Route Calculator
+            const processedRoutes = [
+                {
+                    id: 'ferry',
+                    title: 'Ferry + Last Mile',
+                    carbonGrams: calculateFerryCarbon(ferryDriveLeg.distance_km, ferryLastMileLeg.distance_km),
+                    timeMins: calculateFerryTime(ferryDriveLeg.duration_mins, ferryLastMileLeg.duration_mins),
+                    costDollars: calculateFerryCost(ferryLastMileLeg.distance_km)
+                },
+                {
+                    id: 'car',
+                    title: 'Car (Drive Tunnel)',
+                    carbonGrams: calculateCarCarbon(carRoute.distance_km),
+                    timeMins: calculateCarTime(carRoute.duration_mins),
+                    costDollars: calculateCarCost(carRoute.distance_km)
+                },
+                {
+                    id: 'carpool',
+                    title: 'Carpool (3 Pax)',
+                    carbonGrams: calculateCarpoolCarbon(carRoute.distance_km),
+                    timeMins: calculateCarpoolTime(carRoute.duration_mins),
+                    costDollars: calculateCarpoolCost(carRoute.distance_km)
+                },
+                {
+                    id: 'bus',
+                    title: 'NJ Transit Bus',
+                    carbonGrams: calculateBusCarbon(transitRoute.distance_km),
+                    timeMins: calculateBusTime(transitRoute.duration_mins),
+                    costDollars: calculateBusCost()
+                },
+                {
+                    id: 'train',
+                    title: 'Drive to Train + Subway',
+                    carbonGrams: calculateTrainCarbon(transitRoute.distance_km),
+                    timeMins: calculateTrainTime(transitRoute.duration_mins),
+                    costDollars: calculateTrainCost()
+                },
+                {
+                    id: 'walk',
+                    title: 'Walk to New York',
+                    carbonGrams: calculateWalkCarbon(),
+                    timeMins: calculateWalkTime(walkRoute.duration_mins),
+                    costDollars: calculateWalkCost()
+                }
+            ];
+
+            // 3. Request AI Synthesis
+            const aiData = await generateRecommendation(origin, destination, processedRoutes);
+
+            // 4. Update UI State
+            setRoutesData(processedRoutes);
+            setAiRecommendation(aiData.recommendation);
+
+        } catch (error) {
+            console.error("Error optimizing route:", error);
+            setAiRecommendation("An error occurred while calculating the routes. Please try again.");
+        } finally {
             setIsLoading(false);
-        }, 1500);
+        }
     };
+
+    if (loadError) {
+        return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold bg-slate-900">Error loading Google Maps API</div>;
+    }
+
+    if (!isLoaded) {
+        return <div className="min-h-screen flex items-center justify-center text-teal-500 font-bold bg-slate-900">Loading Google Maps...</div>;
+    }
 
     return (
         <div className="min-h-screen flex flex-col w-full overflow-x-hidden font-sans bg-slate-50 text-slate-900">
@@ -49,13 +141,13 @@ function App() {
                 <main className="w-full max-w-7xl mx-auto py-12 px-4 md:px-8 flex-1 flex flex-col items-center">
                     <RecommendationPanel
                         isLoading={isLoading}
-                        recommendationText="Based on your destination in Midtown Manhattan, the NJ Transit Bus provides the best balance of low emissions and reasonable cost. The Ferry is an option, but the required Uber ride from Pier 11 significantly increases both your carbon footprint and total cost."
+                        recommendationText={aiRecommendation}
                     />
 
-                    {!isLoading && (
+                    {!isLoading && routesData.length > 0 && (
                         <div className="w-full flex flex-col items-center animate-[fadeIn_0.5s_ease-out]">
                             <SortToggle activeSort={activeSort} onSortChange={setActiveSort} />
-                            <RouteGrid routes={MOCK_ROUTES} activeSort={activeSort} />
+                            <RouteGrid routes={routesData} activeSort={activeSort} />
                         </div>
                     )}
                 </main>

@@ -1,6 +1,28 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { Autocomplete } from '@react-google-maps/api';
 
 export default function InputPanel({ origin, destination, setOrigin, setDestination, onSearch }) {
+    const originRef = useRef(null);
+    const destRef = useRef(null);
+
+    const onOriginChanged = () => {
+        if (originRef.current) {
+            const place = originRef.current.getPlace();
+            if (place && place.formatted_address) {
+                setOrigin(place.formatted_address);
+            }
+        }
+    };
+
+    const onDestChanged = () => {
+        if (destRef.current) {
+            const place = destRef.current.getPlace();
+            if (place && place.formatted_address) {
+                setDestination(place.formatted_address);
+            }
+        }
+    };
+
     return (
         <div className="w-full bg-slate-900 border-b-8 border-slate-950 p-6 md:p-12 relative overflow-hidden z-20">
             {/* Background pattern */}
@@ -17,26 +39,30 @@ export default function InputPanel({ origin, destination, setOrigin, setDestinat
                 <div className="flex flex-col md:flex-row gap-4 w-full">
                     <div className="flex-1 relative">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest absolute -top-2 left-4 bg-slate-900 px-2 z-10">Starting Point</label>
-                        <input
-                            type="text"
-                            value={origin}
-                            onChange={(e) => setOrigin(e.target.value)}
-                            className="w-full bg-slate-800 text-white border-2 border-slate-700 rounded-2xl px-6 py-4 outline-none focus:border-teal-500 font-bold placeholder-slate-500 transition-colors"
-                            placeholder="Enter Carteret Address..."
-                        />
+                        <Autocomplete onLoad={(ref) => originRef.current = ref} onPlaceChanged={onOriginChanged}>
+                            <input
+                                type="text"
+                                value={origin}
+                                onChange={(e) => setOrigin(e.target.value)}
+                                className="w-full bg-slate-800 text-white border-2 border-slate-700 rounded-2xl px-6 py-4 outline-none focus:border-teal-500 font-bold placeholder-slate-500 transition-colors"
+                                placeholder="Enter Carteret Address..."
+                            />
+                        </Autocomplete>
                     </div>
                     <div className="flex-1 relative">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest absolute -top-2 left-4 bg-slate-900 px-2 z-10">Destination</label>
-                        <input
-                            type="text"
-                            value={destination}
-                            onChange={(e) => setDestination(e.target.value)}
-                            className="w-full bg-slate-800 text-white border-2 border-slate-700 rounded-2xl px-6 py-4 outline-none focus:border-teal-500 font-bold placeholder-slate-500 transition-colors"
-                            placeholder="Enter NYC Destination..."
-                        />
+                        <Autocomplete onLoad={(ref) => destRef.current = ref} onPlaceChanged={onDestChanged}>
+                            <input
+                                type="text"
+                                value={destination}
+                                onChange={(e) => setDestination(e.target.value)}
+                                className="w-full bg-slate-800 text-white border-2 border-slate-700 rounded-2xl px-6 py-4 outline-none focus:border-teal-500 font-bold placeholder-slate-500 transition-colors"
+                                placeholder="Enter NYC Destination..."
+                            />
+                        </Autocomplete>
                     </div>
                     <button
-                        onClick={onSearch} // No form tags per requirements
+                        onClick={onSearch}
                         className="bg-teal-500 hover:bg-teal-400 text-slate-900 font-black text-lg px-8 py-4 rounded-2xl border-4 border-slate-950 shadow-[4px_4px_0px_0px_rgba(2,6,23,1)] hover:translate-y-1 hover:shadow-none transition-all uppercase tracking-wider"
                     >
                         Optimize
