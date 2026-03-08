@@ -124,42 +124,23 @@ export const getSafeWalkingRoute = async (origin, destination) => {
     });
 };
 
-// ─── Bus 116 Route: Two-Leg (Bus to Port Authority + NYC Transit) ─
+// ─── Bus 116 Route: BUS-only from Carteret to destination ─────────
 // NJ Transit Bus 116 runs direct from Carteret to Port Authority.
-// We filter Google Transit to BUS mode so it picks Bus 116 (not train/subway).
-// Then NYC transit (subway/bus) from Port Authority to the destination.
+// We filter Google Transit to BUS mode ONLY — no subway, no train.
 export const getSafeBusRoute = async (origin, destination) => {
-    try {
-        // Leg 1: Bus 116 from Carteret to Port Authority — filter to BUS mode
-        const busLeg = await getFilteredTransitRoute(
-            origin,
-            PORT_AUTHORITY_ADDRESS,
-            [window.google.maps.TransitMode.BUS]
-        ).catch(() => ({
-            distance_km: 35, duration_mins: 65, steps: []
-        }));
-
-        // Leg 2: NYC transit (subway/bus) from Port Authority to destination
-        const subwayLeg = await getTransitRoute(
-            PORT_AUTHORITY_ADDRESS,
-            destination
-        ).catch(() => ({
-            distance_km: 5, duration_mins: 15, steps: []
-        }));
-
-        return { busLeg, subwayLeg };
-    } catch (err) {
+    return getFilteredTransitRoute(
+        origin,
+        destination,
+        [window.google.maps.TransitMode.BUS]
+    ).catch((err) => {
         console.warn("Bus 116 route fallback used:", err.message);
-        return {
-            busLeg: { distance_km: 35, duration_mins: 65, steps: [] },
-            subwayLeg: { distance_km: 5, duration_mins: 15, steps: [] }
-        };
-    }
+        return { distance_km: 35, duration_mins: 75, steps: [] };
+    });
 };
 
 // ─── Train Route: Two-Leg (Drive to Rahway + NJ Transit Train) ───
-// Drive to Rahway station, NJ Transit to Penn Station, subway to destination.
-// We filter leg 2 to TRAIN + SUBWAY modes to prioritize rail over bus.
+// Drive to Rahway station, then NJ Transit TRAIN only to destination.
+// We filter leg 2 to TRAIN mode ONLY — no subway, no bus.
 export const getSafeTrainRoute = async (origin, destination) => {
     try {
         const [driveLeg, transitLeg] = await Promise.all([
@@ -167,7 +148,7 @@ export const getSafeTrainRoute = async (origin, destination) => {
             getFilteredTransitRoute(
                 RAHWAY_STATION_ADDRESS,
                 destination,
-                [window.google.maps.TransitMode.TRAIN, window.google.maps.TransitMode.SUBWAY]
+                [window.google.maps.TransitMode.TRAIN]
             )
         ]);
         return {

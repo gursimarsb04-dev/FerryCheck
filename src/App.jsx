@@ -139,9 +139,9 @@ function App() {
                 },
                 {
                     id: 'bus',
-                    title: 'Bus 116 + Subway',
-                    carbonGrams: calculateBusCarbon(busRoute.busLeg.distance_km),
-                    timeMins: calculateBusTime(busRoute.busLeg.duration_mins, busRoute.subwayLeg.duration_mins),
+                    title: 'Bus 116',
+                    carbonGrams: calculateBusCarbon(busRoute.distance_km),
+                    timeMins: calculateBusTime(busRoute.duration_mins),
                     costDollars: calculateBusCost()
                 },
                 {

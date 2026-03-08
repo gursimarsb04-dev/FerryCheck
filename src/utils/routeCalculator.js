@@ -49,13 +49,12 @@ export const calculateCarpoolCarbon = (drivingDistanceKm) => calculateCarCarbon(
 export const calculateCarpoolTime = (drivingMins) => drivingMins;
 export const calculateCarpoolCost = (drivingDistanceKm) => calculateCarCost(drivingDistanceKm) / CARPOOL_PASSENGERS;
 
-// --- BUS (Two-Leg: Bus 116 to Port Authority + NYC Subway/Bus to destination) ---
+// --- BUS (Bus 116 only — no subway transfer) ---
 export const calculateBusCarbon = (busDistanceKm) => busDistanceKm * BUS_CO2_PER_PAX_KM;
-// subway is electric, ~0 CO2 — so we only count the NJ Transit bus leg
-export const calculateBusTime = (busMins, subwayMins) => busMins + subwayMins;
-export const calculateBusCost = () => BUS_FARE + SUBWAY_FARE; // $6.50 NJ Transit Bus 116 + $2.90 NYC subway transfer
+export const calculateBusTime = (busMins) => busMins;
+export const calculateBusCost = () => BUS_FARE; // $6.50 NJ Transit Bus 116 only
 
-// --- TRAIN (Two-Leg: Drive to Rahway + NJ Transit to Penn + Subway) ---
+// --- TRAIN (Two-Leg: Drive to Rahway + NJ Transit Train only) ---
 export const calculateTrainCarbon = (driveToStationKm, trainRideKm) => {
     const driveCO2 = driveToStationKm * CAR_CO2_PER_KM;       // driving to Rahway
     const trainCO2 = trainRideKm * TRAIN_CO2_PER_PAX_KM;      // NJ Transit rail
@@ -68,7 +67,7 @@ export const calculateTrainTime = (driveToStationMins, trainRideMins) => {
 
 export const calculateTrainCost = (driveToStationKm) => {
     const gasCost = driveToStationKm * CAR_GAS_COST_PER_KM;
-    return gasCost + TRAIN_FARE + SUBWAY_FARE; // gas + $9 NJ Transit + $2.90 subway
+    return gasCost + TRAIN_FARE; // gas + $9 NJ Transit train only
 };
 
 // --- WALK ---
