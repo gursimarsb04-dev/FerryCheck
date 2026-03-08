@@ -9,10 +9,11 @@ import {
     CAR_ROUTE_KM,
     NJ_TRANSIT_BUS_CO2
 } from '../constants';
-import { calculateBreakevenPassengers } from '../utils/emissionsLogic';
+import { calculateBreakevenPassengers, calculateBreakevenPercentage } from '../utils/emissionsLogic';
 
 export default function Act3_TheVerdict({ passengerCount }) {
     const breakevenCar = calculateBreakevenPassengers();
+    const breakevenPct = Math.round(calculateBreakevenPercentage());
     const soloCarCO2 = CAR_CO2_PER_KM * CAR_ROUTE_KM;
     const ferryAtFull = Math.round(FERRY_BASE_EMISSIONS_G / VESSEL_CAPACITY);
 
@@ -27,7 +28,7 @@ export default function Act3_TheVerdict({ passengerCount }) {
                 </h2>
 
                 <p className="text-xl text-slate-600 mb-12 leading-relaxed text-left max-w-3xl mx-auto">
-                    The breakeven point is {breakevenCar} passengers — requiring the vessel to hit 85% capacity. At 100% capacity, the ferry emits {ferryAtFull.toLocaleString()}g of CO₂ per rider versus {soloCarCO2.toLocaleString()}g for driving alone. The ferry is dirtier than a solo car unless it's nearly full on every single trip. The EA's claim of "environmentally friendly" hangs by a mathematical thread.
+                    The breakeven point is {breakevenCar} passengers — requiring the vessel to hit {breakevenPct}% capacity. At 100% capacity, the ferry emits {ferryAtFull.toLocaleString()}g of CO₂ per rider versus {soloCarCO2.toLocaleString()}g for driving alone. That's a razor-thin {Math.round(((soloCarCO2 - ferryAtFull) / soloCarCO2) * 100)}% advantage — and only if the boat is two-thirds full on every single trip.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 text-left">
