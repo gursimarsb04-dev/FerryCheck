@@ -5,7 +5,8 @@ export default function DataAuditModal({
     setPassengerCount,
     baseFerryCarbon,
     carBaselineCarbon,
-    busBaselineCarbon
+    busBaselineCarbon,
+    onClose
 }) {
     // Math recalculation for the slider
     const currentFerryCarbon = baseFerryCarbon / passengerCount;
@@ -17,8 +18,11 @@ export default function DataAuditModal({
 
     return (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[480px] bg-[#0f1115] border border-slate-800 rounded-3xl p-6 shadow-2xl z-50 text-slate-300">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center justify-between mb-4">
                 <span className="text-teal-500 font-bold uppercase tracking-widest text-xs">ⓘ Data Audit</span>
+                <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 rounded-full p-1 hover:border-slate-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
 
             <h2 className="text-2xl font-bold text-white mb-6 tracking-tight">The "Green" Ferry Claim</h2>

@@ -5,7 +5,6 @@ import {
     BUS_CO2_PER_PAX_KM,
     TRAIN_CO2_PER_PAX_KM,
     WALK_CO2,
-    FERRY_CAPACITY,
     FERRY_ASSUMED_OCCUPANCY,
     FERRY_TIME_WATER_MINS,
     FERRY_FARE,
@@ -16,7 +15,8 @@ import {
     BUS_FARE,
     TRAIN_FARE,
     WALK_COST,
-    WALK_CALORIES_PER_KM
+    WALK_CALORIES_PER_KM,
+    SUBWAY_FARE
 } from '../constants';
 
 // --- FERRY ---
@@ -31,10 +31,10 @@ export const calculateFerryTime = (terminalDriveMins, lastMileMins) => {
     return terminalDriveMins + FERRY_TIME_WATER_MINS + lastMileMins;
 };
 
-export const calculateFerryCost = (lastMileKm) => {
-    // Assuming Last Mile is an Uber if > 1km walk, else 0
-    let lastMileCost = lastMileKm > 1 ? FERRY_LAST_MILE_UBER : 0;
-    return FERRY_FARE + lastMileCost;
+export const calculateFerryCost = (terminalDriveKm, lastMileKm) => {
+    const gasCost = terminalDriveKm * CAR_GAS_COST_PER_KM;
+    const lastMileCost = lastMileKm > 1 ? FERRY_LAST_MILE_UBER : 0;
+    return FERRY_FARE + gasCost + lastMileCost;
 };
 
 // --- CAR ---
@@ -52,12 +52,23 @@ export const calculateCarpoolCost = (drivingDistanceKm) => calculateCarCost(driv
 // --- BUS ---
 export const calculateBusCarbon = (transitDistanceKm) => transitDistanceKm * BUS_CO2_PER_PAX_KM;
 export const calculateBusTime = (transitMins) => transitMins;
-export const calculateBusCost = () => BUS_FARE;
+export const calculateBusCost = () => BUS_FARE + SUBWAY_FARE; // $6.50 bus + $2.90 NYC subway transfer
 
-// --- TRAIN ---
-export const calculateTrainCarbon = (transitDistanceKm) => transitDistanceKm * TRAIN_CO2_PER_PAX_KM;
-export const calculateTrainTime = (transitMins) => transitMins;
-export const calculateTrainCost = () => TRAIN_FARE;
+// --- TRAIN (Two-Leg: Drive to Rahway + NJ Transit to Penn + Subway) ---
+export const calculateTrainCarbon = (driveToStationKm, trainRideKm) => {
+    const driveCO2 = driveToStationKm * CAR_CO2_PER_KM;       // driving to Rahway
+    const trainCO2 = trainRideKm * TRAIN_CO2_PER_PAX_KM;      // NJ Transit rail
+    return driveCO2 + trainCO2;
+};
+
+export const calculateTrainTime = (driveToStationMins, trainRideMins) => {
+    return driveToStationMins + trainRideMins;
+};
+
+export const calculateTrainCost = (driveToStationKm) => {
+    const gasCost = driveToStationKm * CAR_GAS_COST_PER_KM;
+    return gasCost + TRAIN_FARE + SUBWAY_FARE; // gas + $9 NJ Transit + $2.90 subway
+};
 
 // --- WALK ---
 export const calculateWalkCarbon = () => WALK_CO2;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoogleMap, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 
 const mapContainerStyle = {
     width: '100%',
@@ -58,12 +58,21 @@ const darkMapStyle = [
     },
 ];
 
-export default function MapCanvas({ directionsResponse }) {
+export default function MapCanvas({ directionsResponse, selectedRouteId }) {
+    // Hardcoded path over the water from Carteret to Pier 11
+    const ferryPath = [
+        { lat: 40.5843, lng: -74.2185 }, // Carteret Waterfront Park
+        { lat: 40.5950, lng: -74.1900 }, // Arthur Kill
+        { lat: 40.6400, lng: -74.1000 }, // Kill Van Kull
+        { lat: 40.6800, lng: -74.0300 }, // Upper Bay
+        { lat: 40.7032, lng: -74.0044 }  // Pier 11
+    ];
+
     return (
         <GoogleMap
             mapContainerStyle={mapContainerStyle}
-            zoom={11}
-            center={defaultCenter}
+            zoom={12}
+            center={{ lat: 40.5843, lng: -74.2185 }} // Start on Carteret
             options={{
                 styles: darkMapStyle,
                 disableDefaultUI: true, // cleaner look
@@ -80,6 +89,27 @@ export default function MapCanvas({ directionsResponse }) {
                             strokeOpacity: 0.8
                         },
                         suppressMarkers: false
+                    }}
+                />
+            )}
+
+            {/* Hardcoded Ferry Polyline */}
+            {selectedRouteId === 'ferry' && (
+                <Polyline
+                    path={ferryPath}
+                    options={{
+                        strokeColor: '#38bdf8', // visible light blue
+                        strokeOpacity: 0, // 0 because we use icons for dashed line
+                        strokeWeight: 4,
+                        icons: [{
+                            icon: {
+                                path: 'M 0,-1 0,1',
+                                strokeOpacity: 1,
+                                scale: 4
+                            },
+                            offset: '0',
+                            repeat: '20px'
+                        }]
                     }}
                 />
             )}

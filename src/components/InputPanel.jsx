@@ -4,6 +4,19 @@ import { Autocomplete } from '@react-google-maps/api';
 export default function InputPanel({ origin, destination, setDestination, onSearch }) {
     const destRef = useRef(null);
 
+    // Restrict autocomplete suggestions to the 5 NYC boroughs
+    const nycBounds = window.google ? new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(40.49, -74.26),  // SW corner (Staten Island)
+        new window.google.maps.LatLng(40.92, -73.68)   // NE corner (Bronx)
+    ) : undefined;
+
+    const autocompleteOptions = {
+        bounds: nycBounds,
+        strictBounds: true,
+        componentRestrictions: { country: 'us' },
+        types: ['geocode', 'establishment']
+    };
+
     const onDestChanged = () => {
         if (destRef.current) {
             const place = destRef.current.getPlace();
@@ -27,7 +40,7 @@ export default function InputPanel({ origin, destination, setDestination, onSear
             {/* Destination — Google Places Autocomplete */}
             <div className="w-full relative">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest absolute -top-2 left-3 bg-slate-950 px-1 z-10">Destination</label>
-                <Autocomplete onLoad={(ref) => destRef.current = ref} onPlaceChanged={onDestChanged}>
+                <Autocomplete onLoad={(ref) => destRef.current = ref} onPlaceChanged={onDestChanged} options={autocompleteOptions}>
                     <input
                         type="text"
                         value={destination}

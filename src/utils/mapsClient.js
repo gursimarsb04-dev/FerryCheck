@@ -1,4 +1,4 @@
-import { TERMINAL_ADDRESS, FERRY_ROUTE_KM, CAR_ROUTE_KM } from '../constants';
+import { TERMINAL_ADDRESS, FERRY_ROUTE_KM, CAR_ROUTE_KM, RAHWAY_STATION_ADDRESS } from '../constants';
 
 // ─── Core Directions Wrappers ─────────────────────────────────────
 // Each function wraps the Google Maps DirectionsService and includes
@@ -76,40 +76,85 @@ export const getWalkingRoute = async (origin, destination) => {
 export const getSafeDrivingRoute = async (origin, destination) => {
     return getDrivingRoute(origin, destination).catch((err) => {
         console.warn("Driving route fallback used:", err.message);
-        return { distance_km: CAR_ROUTE_KM, duration_mins: 55 }; // 41 km, ~55 min Carteret→Manhattan
+        return { distance_km: CAR_ROUTE_KM, duration_mins: 55 };
     });
 };
 
 export const getSafeTransitRoute = async (origin, destination) => {
     return getTransitRoute(origin, destination).catch((err) => {
         console.warn("Transit route fallback used:", err.message);
-        return { distance_km: CAR_ROUTE_KM, duration_mins: 90, steps: [] }; // ~90 min NJ Transit estimate
+        return { distance_km: CAR_ROUTE_KM, duration_mins: 90, steps: [] };
     });
 };
 
 export const getSafeWalkingRoute = async (origin, destination) => {
     return getWalkingRoute(origin, destination).catch((err) => {
         console.warn("Walking route fallback used:", err.message);
-        return { distance_km: CAR_ROUTE_KM, duration_mins: 540 }; // ~9 hours walking
+        return { distance_km: CAR_ROUTE_KM, duration_mins: 540 };
     });
+};
+
+// ─── Train Route: Two-Leg (Drive to Rahway + Train to NYC) ───────
+// This is SEPARATE from the bus transit route. The spec says:
+// "Drive to Rahway or Woodbridge station, NJ Transit to Penn Station, subway to destination"
+export const getSafeTrainRoute = async (origin, destination) => {
+    try {
+        const [driveLeg, transitLeg] = await Promise.all([
+            getDrivingRoute(origin, RAHWAY_STATION_ADDRESS),
+            getTransitRoute(RAHWAY_STATION_ADDRESS, destination)
+        ]);
+        return {
+            driveToStation: driveLeg,
+            trainToDestination: transitLeg
+        };
+    } catch (err) {
+        console.warn("Train route fallback used:", err.message);
+        return {
+            driveToStation: { distance_km: 11, duration_mins: 15 },
+            trainToDestination: { distance_km: 30, duration_mins: 55, steps: [] }
+        };
+    }
 };
 
 // ─── Ferry-Specific Legs ──────────────────────────────────────────
 
 export const getFerryDriveToTerminal = async (origin) => {
-    // If origin IS the terminal (hardcoded default), no drive needed
     if (origin === TERMINAL_ADDRESS) {
         return { distance_km: 0, duration_mins: 0 };
     }
     return getDrivingRoute(origin, TERMINAL_ADDRESS).catch(() => {
-        return { distance_km: 5.2, duration_mins: 12 }; // Fallback: avg Carteret resident
+        return { distance_km: 5.2, duration_mins: 12 };
     });
 };
 
 export const getFerryLastMile = async (destination) => {
     const PIER_11_ADDRESS = "Pier 11 / Wall St, New York, NY 10005";
     return getDrivingRoute(PIER_11_ADDRESS, destination).catch(() => {
-        return { distance_km: 2.1, duration_mins: 18, recommended_mode: 'uber' }; // Fallback
+        return { distance_km: 2.1, duration_mins: 18, recommended_mode: 'uber' };
+    });
+};
+
+// ─── NYC Validation ───────────────────────────────────────────────
+// Geocodes an address and checks if it falls within the 5 NYC boroughs bounding box.
+export const isWithinNYC = async (address) => {
+    const NYC_BOUNDS = { south: 40.49, west: -74.26, north: 40.92, east: -73.68 };
+
+    if (!window.google) return true; // fail open if API not loaded
+
+    return new Promise((resolve) => {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ address }, (results, status) => {
+            if (status !== 'OK' || !results[0]) {
+                resolve(false);
+                return;
+            }
+            const loc = results[0].geometry.location;
+            const lat = loc.lat();
+            const lng = loc.lng();
+            const inBounds = lat >= NYC_BOUNDS.south && lat <= NYC_BOUNDS.north
+                          && lng >= NYC_BOUNDS.west  && lng <= NYC_BOUNDS.east;
+            resolve(inBounds);
+        });
     });
 };
 

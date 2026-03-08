@@ -8,7 +8,7 @@ import { TERMINAL_ADDRESS } from './constants';
 const libraries = ['places'];
 
 // Import our new utility layers
-import { getSafeDrivingRoute, getSafeTransitRoute, getSafeWalkingRoute, getFerryDriveToTerminal, getFerryLastMile } from './utils/mapsClient';
+import { getSafeDrivingRoute, getSafeTransitRoute, getSafeWalkingRoute, getSafeTrainRoute, getFerryDriveToTerminal, getFerryLastMile, isWithinNYC } from './utils/mapsClient';
 import {
     calculateFerryCarbon, calculateFerryTime, calculateFerryCost,
     calculateCarCarbon, calculateCarTime, calculateCarCost,
@@ -69,21 +69,32 @@ function App() {
     const handleSearch = async () => {
         if (!destination) return;
         setIsLoading(true);
+        setAiRecommendation('');
 
         try {
+            // 0. Validate destination is within NYC
+            const inNYC = await isWithinNYC(destination);
+            if (!inNYC) {
+                setAiRecommendation('Destination must be within the 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island).');
+                setIsLoading(false);
+                return;
+            }
+
             // 1. Fetch all Google Maps route legs in parallel
             const [
                 carRoute,
                 transitRoute,
                 walkRoute,
                 ferryDriveLeg,
-                ferryLastMileLeg
+                ferryLastMileLeg,
+                trainRoute
             ] = await Promise.all([
                 getSafeDrivingRoute(origin, destination),
                 getSafeTransitRoute(origin, destination),
                 getSafeWalkingRoute(origin, destination),
                 getFerryDriveToTerminal(origin),
-                getFerryLastMile(destination)
+                getFerryLastMile(destination),
+                getSafeTrainRoute(origin, destination)
             ]);
 
             // 2. Crunch the numbers through the Route Calculator
@@ -93,7 +104,7 @@ function App() {
                     title: 'Ferry + Last Mile',
                     carbonGrams: calculateFerryCarbon(ferryDriveLeg.distance_km, ferryLastMileLeg.distance_km),
                     timeMins: calculateFerryTime(ferryDriveLeg.duration_mins, ferryLastMileLeg.duration_mins),
-                    costDollars: calculateFerryCost(ferryLastMileLeg.distance_km)
+                    costDollars: calculateFerryCost(ferryDriveLeg.distance_km, ferryLastMileLeg.distance_km)
                 },
                 {
                     id: 'car',
@@ -119,9 +130,15 @@ function App() {
                 {
                     id: 'train',
                     title: 'Drive to Train + Subway',
-                    carbonGrams: calculateTrainCarbon(transitRoute.distance_km),
-                    timeMins: calculateTrainTime(transitRoute.duration_mins),
-                    costDollars: calculateTrainCost()
+                    carbonGrams: calculateTrainCarbon(
+                        trainRoute.driveToStation.distance_km,
+                        trainRoute.trainToDestination.distance_km
+                    ),
+                    timeMins: calculateTrainTime(
+                        trainRoute.driveToStation.duration_mins,
+                        trainRoute.trainToDestination.duration_mins
+                    ),
+                    costDollars: calculateTrainCost(trainRoute.driveToStation.distance_km)
                 },
                 {
                     id: 'walk',
@@ -182,6 +199,7 @@ function App() {
                         baseFerryCarbon={FERRY_BASE_EMISSIONS_G}
                         carBaselineCarbon={routesData.find(r => r.id === 'car')?.carbonGrams || 7200}
                         busBaselineCarbon={routesData.find(r => r.id === 'bus')?.carbonGrams || 1100}
+                        onClose={() => setSelectedRouteId(null)}
                     />
                 )}
             </div>

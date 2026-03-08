@@ -41,6 +41,12 @@ export const WALK_CO2 = 0;                             // zero emissions for wal
 export const WALK_COST = 0;                            // free to walk
 export const WALK_CALORIES_PER_KM = 65;                // approximate
 
+// ─── SUBWAY ─────────────────────────────────────────────────────
+export const SUBWAY_FARE = 2.90;                        // NYC MTA single ride [2024]
+
+// ─── TRAIN STATION ──────────────────────────────────────────────
+export const RAHWAY_STATION_ADDRESS = 'Rahway Station, Rahway, NJ 07065'; // nearest NJ Transit rail station
+
 // ─── LAST MILE / TERMINAL ────────────────────────────────────────
 export const TERMINAL_DRIVE_KM = 5;                    // assumed average [EA]
 export const TERMINAL_ADDRESS = 'Carteret Waterfront Park, Carteret, NJ 07008';
