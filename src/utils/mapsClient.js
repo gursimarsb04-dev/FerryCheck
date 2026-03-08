@@ -124,44 +124,31 @@ export const getSafeWalkingRoute = async (origin, destination) => {
     });
 };
 
-// ─── Bus 116 Route: Carteret → Port Authority (fixed terminus) ────
-// NJ Transit Bus 116 goes direct from Carteret to Port Authority.
-// We route to PORT_AUTHORITY specifically so Google doesn't detour
-// through Perth Amboy or connect to trains.
-export const getSafeBusRoute = async (origin) => {
-    return getFilteredTransitRoute(
-        origin,
-        PORT_AUTHORITY_ADDRESS,
-        [window.google.maps.TransitMode.BUS]
-    ).catch((err) => {
-        console.warn("Bus 116 route fallback used:", err.message);
-        return { distance_km: 35, duration_mins: 75, steps: [] };
-    });
+// ─── Bus 116 Route: HARDCODED (Google Transit keeps routing through Perth Amboy) ─
+// NJ Transit Bus 116: Carteret → Port Authority is a FIXED route.
+// Distance and time don't change — no Google Transit API needed.
+// ~35 km, ~75 min scheduled ride time.
+export const getSafeBusRoute = async () => {
+    return { distance_km: 35, duration_mins: 75 };
 };
 
-// ─── Train Route: Two-Leg (Drive to Rahway + Train to Penn Station) ──
-// Drive to Rahway station, then NJ Transit TRAIN to Penn Station.
-// We route to PENN_STATION specifically so Google doesn't detour
-// through Perth Amboy or connect to buses.
+// ─── Train Route: Drive to Rahway (Google) + Train HARDCODED ─────
+// Leg 1: Drive to Rahway — uses Google Directions (driving works fine).
+// Leg 2: NJ Transit Northeast Corridor: Rahway → Penn Station is a
+// FIXED rail route. ~30 km, ~50 min. Google Transit keeps picking
+// wrong routes through Perth Amboy, so we hardcode the train leg.
 export const getSafeTrainRoute = async (origin) => {
     try {
-        const [driveLeg, transitLeg] = await Promise.all([
-            getDrivingRoute(origin, RAHWAY_STATION_ADDRESS),
-            getFilteredTransitRoute(
-                RAHWAY_STATION_ADDRESS,
-                PENN_STATION_ADDRESS,
-                [window.google.maps.TransitMode.TRAIN]
-            )
-        ]);
+        const driveLeg = await getDrivingRoute(origin, RAHWAY_STATION_ADDRESS);
         return {
             driveToStation: driveLeg,
-            trainToDestination: transitLeg
+            trainToDestination: { distance_km: 30, duration_mins: 50 }
         };
     } catch (err) {
-        console.warn("Train route fallback used:", err.message);
+        console.warn("Train drive leg fallback used:", err.message);
         return {
             driveToStation: { distance_km: 11, duration_mins: 15 },
-            trainToDestination: { distance_km: 30, duration_mins: 55, steps: [] }
+            trainToDestination: { distance_km: 30, duration_mins: 50 }
         };
     }
 };

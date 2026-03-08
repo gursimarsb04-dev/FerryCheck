@@ -3,7 +3,7 @@ import DashboardSidebar from './components/DashboardSidebar';
 import MapCanvas from './components/MapCanvas';
 import DataAuditModal from './components/DataAuditModal';
 import { useJsApiLoader } from '@react-google-maps/api';
-import { TERMINAL_ADDRESS } from './constants';
+import { TERMINAL_ADDRESS, PORT_AUTHORITY_ADDRESS, PENN_STATION_ADDRESS } from './constants';
 
 const libraries = ['places'];
 
@@ -45,12 +45,41 @@ function App() {
         if (!isLoaded || !origin || !destination || !selectedRouteId) return;
 
         const directionsService = new window.google.maps.DirectionsService();
-
-        // Ferry: show ONLY last-mile from Pier 11 → destination (water route drawn by MapCanvas polyline)
-        if (selectedRouteId === 'ferry') {
-            const PIER_11 = "Pier 11 / Wall St, New York, NY 10005";
+        const fetchDriving = (from, to) => {
             directionsService.route(
-                { origin: PIER_11, destination, travelMode: window.google.maps.TravelMode.DRIVING },
+                { origin: from, destination: to, travelMode: window.google.maps.TravelMode.DRIVING },
+                (result, status) => {
+                    if (status === window.google.maps.DirectionsStatus.OK) {
+                        setDirectionsResponse(result);
+                    } else {
+                        setDirectionsResponse(null);
+                    }
+                }
+            );
+        };
+
+        // Ferry: show last-mile from Pier 11 → destination (water route drawn by MapCanvas polyline)
+        if (selectedRouteId === 'ferry') {
+            fetchDriving("Pier 11 / Wall St, New York, NY 10005", destination);
+            return;
+        }
+
+        // Bus 116: show driving route to Port Authority (bus follows roads, no Transit API)
+        if (selectedRouteId === 'bus') {
+            fetchDriving(origin, PORT_AUTHORITY_ADDRESS);
+            return;
+        }
+
+        // Train: show driving route to Penn Station (avoids Transit API Perth Amboy issue)
+        if (selectedRouteId === 'train') {
+            fetchDriving(origin, PENN_STATION_ADDRESS);
+            return;
+        }
+
+        // Walk
+        if (selectedRouteId === 'walk') {
+            directionsService.route(
+                { origin, destination, travelMode: window.google.maps.TravelMode.WALKING },
                 (result, status) => {
                     if (status === window.google.maps.DirectionsStatus.OK) {
                         setDirectionsResponse(result);
@@ -62,25 +91,8 @@ function App() {
             return;
         }
 
-        // Other routes: standard directions from origin to destination
-        let travelMode = window.google.maps.TravelMode.DRIVING;
-        if (selectedRouteId === 'bus' || selectedRouteId === 'train') {
-            travelMode = window.google.maps.TravelMode.TRANSIT;
-        } else if (selectedRouteId === 'walk') {
-            travelMode = window.google.maps.TravelMode.WALKING;
-        }
-
-        directionsService.route(
-            { origin, destination, travelMode },
-            (result, status) => {
-                if (status === window.google.maps.DirectionsStatus.OK) {
-                    setDirectionsResponse(result);
-                } else {
-                    console.error('Directions request failed due to ' + status);
-                    setDirectionsResponse(null);
-                }
-            }
-        );
+        // Car / Carpool: standard driving route
+        fetchDriving(origin, destination);
     }, [selectedRouteId, origin, destination, isLoaded]);
 
     const handleSearch = async () => {
